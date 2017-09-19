@@ -1,0 +1,6 @@
+*.epub
+*.log
+**/.idea/**
+node_modules/**
+python/ffnet/cache/**
+*.pyc
