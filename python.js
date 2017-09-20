@@ -61,9 +61,9 @@ class ffnetInterface extends events.EventEmitter {
         this.script.on('message', m => {
             console.log("Script message:", m);
             this.handle(m);
-            if (m.type == 'notification') {
+            /*if (m.type == 'notification') {
                 this.emit('notification', m)
-            }
+            }*/
         })
     }
 
