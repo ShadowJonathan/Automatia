@@ -66,7 +66,8 @@ module.exports = class ffnet {
         return (async () => {
             switch (args.type) {
                 case 'dl': {
-                    let s = new SA.Story(args.story.id);
+                    let s = new SA.Story(args.story.id, args.self && args.self.s.send || (() => {
+                    }));
                     if (args.self) {
                         s.on('notification', (n) => {
                             args.self.notify(n)
