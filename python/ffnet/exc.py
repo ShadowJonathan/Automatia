@@ -81,6 +81,14 @@ class StoryDoesNotExist(Exception):
         return "Story does not exist: (%s)" % self.url
 
 
+class ArchiveDoesNotExist(Exception):
+    def __init__(self, url):
+        self.url = url
+
+    def __str__(self):
+        return "Archive does not exist: (%s)" % self.url
+
+
 class UnknownSite(Exception):
     def __init__(self, url, supported_sites_list):
         self.url = url
