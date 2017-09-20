@@ -11,7 +11,6 @@ const s = JSON.stringify;
 const us = JSON.parse;
 
 app.use(router);
-app.use('/client', express.static(__dirname + '/client'));
 
 router.get('/', function (req, res) {
     res.send('Hello World!')
@@ -27,11 +26,13 @@ server.listen(8080, function listening() {
 
 wss.on('connection', function connection(ws, req) {
     ws.isAlive = true;
-    ws.on('message', m => m['pong'] && (this.isAlive = true));
+    ws.on('message', m => {
+        if (JSON.parse(m).pong) ws.isAlive = true
+    });
     ws.ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
     ws.on('message', function incoming(message) {
-        console.log('received: %s', message);
+        console.log('received:', message);
     });
 
     ws.send(s({'msg': 'login'}));
@@ -39,8 +40,8 @@ wss.on('connection', function connection(ws, req) {
 
 const beat = setInterval(function ping() {
     wss.clients.forEach(function each(ws) {
-        if (ws.isAlive === false) {
-            console.log(ws.ip + " terminated.")
+        if (!ws.isAlive) {
+            console.log(ws.ip + " terminated.");
             return ws.terminate();
         } else {
             console.log(ws.ip + " alive.")
