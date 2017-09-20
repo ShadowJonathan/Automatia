@@ -4,9 +4,9 @@ import logging
 import urllib
 import bs4
 from datetime import datetime
-import time
 import json
 import py
+import exc
 
 logger = logging.getLogger(__name__)
 
@@ -469,12 +469,23 @@ class Archive(story.WebClient):
         import os
         path = os.path.dirname(os.path.realpath(__file__)) + '/cache/' + category + '/' + archive + \
                '.json'
-        print path
+        #print path
         try:
             cache = JSONHandler(path)
         except Exception, e:
             raise Exception("Cannot get JSON file, this probably doesnt exist: " + str(e))
         return path, EntryList(cache.data).Latest_Refresh()
+
+    @staticmethod
+    def info(category, archive):
+        import os
+        path = os.path.dirname(os.path.realpath(__file__)) + '/cache/' + category + '/' + archive + \
+            '.json'
+        if os.path.exists(path):
+            cache = EntryList(JSONHandler(path).data)
+            py.ffnet_archive().info(True, cache.Earliest_Updated(), cache.Latest_Updated(), len(cache)).post()
+        else:
+            py.ffnet_archive().info(False).post()
 
     def __init__(self, url):
         story.WebClient.__init__(self)
@@ -538,7 +549,7 @@ class Archive(story.WebClient):
         import os
         path = os.path.dirname(os.path.realpath(__file__)) + '/cache/' + self.category + '/' + self.archive_name + \
                '.json'
-        print path
+        #print path
         try:
             os.makedirs(os.path.dirname(path))
         except:

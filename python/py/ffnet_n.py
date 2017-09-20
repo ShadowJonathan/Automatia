@@ -56,3 +56,14 @@ class ffnet_archive(ffnet_notify):
         self.messages['file_path'] = data[0]
         self.messages['latest_refresh'] = data[1]
         return self
+
+    def info(self, initialised=False, earliest=None, latest=None, amount=None):
+        self.messages['initialised'] = initialised
+        self.messages['earliest'] = earliest
+        self.messages['latest'] = latest
+        self.messages['amount'] = amount
+        return self
+
+    def archive_index(self, results):
+        self.messages['data'] = [{'name': e[0], 'len': e[1], 'url': e[2]} for e in results]
+        return self

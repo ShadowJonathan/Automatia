@@ -1,6 +1,9 @@
 *.epub
 *.log
-**/.idea/**
-node_modules/**
-python/ffnet/cache/**
+**/.idea/
+node_modules/
+python/ffnet/cache/
 *.pyc
+sessions/
+files/
+jobs.json

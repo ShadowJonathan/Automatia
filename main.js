@@ -3,9 +3,16 @@ const http = require('http');
 const url = require('url');
 const WebSocket = require('ws');
 const app = express();
+const uuid = require('uuid/v1');
 const router = express.Router();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({server});
+const Serve = require('./serve');
+
+try {
+    require('fs').mkdirSync('files');
+} catch (err) {
+}
 
 const s = JSON.stringify;
 const us = JSON.parse;
@@ -15,9 +22,13 @@ app.use(router);
 router.get('/', function (req, res) {
     res.send('Hello World!')
 });
+try {
+    router.use('/files', express.static(__dirname + "/files"));
+} catch(err) {
+}
 
-router.get('/test', function (req, res) {
-    res.send('Hello World Too!')
+router.get('/register', function (req, res) {
+    res.send(uuid())
 });
 
 server.listen(8080, function listening() {
@@ -27,24 +38,24 @@ server.listen(8080, function listening() {
 wss.on('connection', function connection(ws, req) {
     ws.isAlive = true;
     ws.on('message', m => {
-        if (JSON.parse(m).pong) ws.isAlive = true
+        if (us(m).pong) ws.isAlive = true
     });
     ws.ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
+    console.log("Connection from %s", ws.ip);
     ws.on('message', function incoming(message) {
-        console.log('received:', message);
+        if (message != '{"pong":true}')
+            console.log('Received (' + this.ip + '):', message);
     });
 
-    ws.send(s({'msg': 'login'}));
+    ws.send(s({login: true}));
+    ws.S = new Serve(ws)
 });
 
 const beat = setInterval(function ping() {
     wss.clients.forEach(function each(ws) {
         if (!ws.isAlive) {
-            console.log(ws.ip + " terminated.");
             return ws.terminate();
-        } else {
-            console.log(ws.ip + " alive.")
         }
 
         ws.isAlive = false;
