@@ -3,7 +3,7 @@ import re
 import logging
 import urllib
 import bs4
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import py
 import exc
@@ -69,6 +69,26 @@ def Url_category(name):
                 return cat_t[1]
 
 
+def SmartGetAllArchives(category):
+    import os
+    path = os.path.dirname(os.path.realpath(__file__)) + '/cache/' + category + '/' + 'meta.json'
+    # print path
+    try:
+        os.makedirs(os.path.dirname(path))
+    except:
+        pass
+    h = JSONHandler(path)
+    if h.data.get('last_updated'):
+        h.data['last_updated'] = make_datetime(h.data.get('last_updated'))
+    if len(h.data) < 1:
+        h.process({'archives': GetAllArchives(category), 'last_updated': datetime.now()})
+        h.save()
+    elif h.data.get('last_updated') < datetime.now() - timedelta(days=7):
+        h.process({'archives': GetAllArchives(category), 'last_updated': datetime.now()})
+        h.save()
+    return h.data['archives']
+
+
 def GetAllArchives(catagory, crossover=False):
     cat = Valid_category(catagory)
     if cat is False:
@@ -92,6 +112,18 @@ def handler(x):
     elif isinstance(x, Entry):
         return x.data
     raise TypeError("Unknown type")
+
+
+def make_datetime(json_date):
+    try:
+        return datetime.strptime(json_date, '%Y-%m-%dT%H:%M:%S.%fZ')
+    except:
+        pass
+    try:
+        return datetime.strptime(json_date, '%Y-%m-%dT%H:%M:%S.%f')
+    except:
+        pass
+    return datetime.strptime(json_date, '%Y-%m-%dT%H:%M:%S')
 
 
 class JSONHandler:
@@ -263,17 +295,6 @@ class SearchArgs:
 class Entry:
     def __init__(self, soup, data=None):
         if data:
-            def make_datetime(json_date):
-                try:
-                    return datetime.strptime(json_date, '%Y-%m-%dT%H:%M:%S.%fZ')
-                except:
-                    pass
-                try:
-                    return datetime.strptime(json_date, '%Y-%m-%dT%H:%M:%S.%f')
-                except:
-                    pass
-                return datetime.strptime(json_date, '%Y-%m-%dT%H:%M:%S')
-
             self.data = data
             self.data['last_refreshed'] = make_datetime(self.data['last_refreshed'])
             if self.data.get('updated'):
@@ -469,7 +490,7 @@ class Archive(story.WebClient):
         import os
         path = os.path.dirname(os.path.realpath(__file__)) + '/cache/' + category + '/' + archive + \
                '.json'
-        #print path
+        # print path
         try:
             cache = JSONHandler(path)
         except Exception, e:
@@ -480,12 +501,14 @@ class Archive(story.WebClient):
     def info(category, archive):
         import os
         path = os.path.dirname(os.path.realpath(__file__)) + '/cache/' + category + '/' + archive + \
-            '.json'
+               '.json'
         if os.path.exists(path):
             cache = EntryList(JSONHandler(path).data)
-            py.ffnet_archive().info(True, cache.Earliest_Updated(), cache.Latest_Updated(), len(cache)).post()
+            al = GetAllArchives(category)
+            meta = al[next(index for (index, d) in enumerate(al) if archive.lower() in d[2].lower())]
+            py.ffnet_archive().info(True, category, archive, cache.Earliest_Updated(), cache.Latest_Updated(), len(cache), meta).post()
         else:
-            py.ffnet_archive().info(False).post()
+            py.ffnet_archive().info(False, category, archive).post()
 
     def __init__(self, url):
         story.WebClient.__init__(self)
@@ -510,8 +533,7 @@ class Archive(story.WebClient):
     def _get_first(self, pages=1):
         for x in range(0, pages):
             logger.debug("Getting page %d of %d" % (x + 1, pages))
-            _, soup = self.get(self._get_url_plus_args(x or None))
-            self._convert_entries(soup)
+            self._get_page(self._get_url_plus_args(x or None))
 
     def _get_all(self, limit=None):
         count = None
@@ -530,12 +552,10 @@ class Archive(story.WebClient):
         n.progress_init(count, 'page')
         for x in range(0, count + 1):
             logger.debug("Getting page %d of %d" % (x + 1, count))
-            _, soup = self.get(self._get_url_plus_args(x or None))
-            self._convert_entries(soup)
+            self._get_page(self._get_url_plus_args(x or None))
             n.progress(x).post()
 
     def _get_page(self, page):
-        logger.debug("Getting page %d" % page)
         _, soup = self.get(self._get_url_plus_args(page))
         self._convert_entries(soup)
 
@@ -549,7 +569,7 @@ class Archive(story.WebClient):
         import os
         path = os.path.dirname(os.path.realpath(__file__)) + '/cache/' + self.category + '/' + self.archive_name + \
                '.json'
-        #print path
+        # print path
         try:
             os.makedirs(os.path.dirname(path))
         except:

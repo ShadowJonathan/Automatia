@@ -95,13 +95,12 @@ try:
         if (not category) or category and (not search.Valid_category(category)):
             raise exc.InvalidArgs('NO VALID CATEGORY ARG')
         if not archive:
-            ffnet_archive().archive_index(search.GetAllArchives(category)).post()
+            ffnet_archive().archive_index(search.SmartGetAllArchives(category)).post()
         else:
             a = None
-            if action != 'dump' or action != 'info':
+            action = action or 'info'
+            if action != 'dump' and action != 'info':
                 a = search.Archive('/' + search.CAT2URL[search.Valid_category(category)] + "/" + archive + '/')
-
-            action = action or 'update'
 
             if '-allow-m' in sys.argv:
                 a.args.Rating(10)
@@ -116,6 +115,9 @@ try:
                 a.refresh(ALL)
             elif action == 'info':
                 search.Archive.info(search.CAT2URL[search.Valid_category(category)], archive)
+            elif action == 'getinfo':
+                a.update(1)
+                search.Archive.info(search.CAT2URL[search.Valid_category(category)], archive)
             elif action == 'dump':
                 dump = search.Archive.dump_cache(search.CAT2URL[search.Valid_category(category)], archive)
                 ffnet_archive().dump(dump).post()
@@ -127,8 +129,8 @@ except exc.NoURL:
     ffnet_notify().fail("No Url", 0).post()
 except exc.ArchiveDoesNotExist:
     ffnet_notify().fail("Archive Invalid", 6).post()
-except Exception as e:
-    ffnet_notify().fail("Unknown Error: %s" % e, 10).post()
+#except Exception as e:
+#    ffnet_notify().fail("Unknown Error: %s" % e, 10).post()
 
     # 0: no url
     # 1: story doesn't exist

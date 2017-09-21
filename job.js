@@ -31,7 +31,7 @@ class Job {
             jobs.flush = true;
             res(...arguments)
         };
-        require('./modules')[packet.m_n].doJob(packet.args).then(r)
+        require('./modules')[packet.m_n].doJob(packet.args).then(r);
     }
 
     static processBacklog() {
@@ -39,11 +39,10 @@ class Job {
     }
 
     static getResults(JobID) {
-        for (let j of jobs) {
+        for (let j of jobs.queue) {
             if (j.jobID == JobID) {
                 if (!j.finished) {
-                    console.warn(j.jobID, 'was missed in the init sweep, module requested results of it');
-                    return -1
+                    return "WORKING"
                 } else {
                     return j.results
                 }

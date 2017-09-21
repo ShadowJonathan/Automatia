@@ -1,6 +1,7 @@
 const PJO = require('persisted-json-object');
 const events = require('events');
 const modules = require('./modules');
+const Job = require('./job');
 try {
     require('fs').mkdirSync('sessions');
 } catch (err) {
@@ -13,7 +14,12 @@ class Serve extends events.EventEmitter {
         this.ws.onclose = () => this.emit('close');
         this.meta = {};
         this.r_uuid = null;
-        this.send = (m) => this.ws.send(JSON.stringify(m));
+        this.send = (m) => {
+            try {
+                this.ws.send(JSON.stringify(m))
+            } catch (err) {
+            }
+        };
         this.ws.on('message', m => {
             m = JSON.parse(m);
             m.reply = this.send;
@@ -36,6 +42,10 @@ class Serve extends events.EventEmitter {
 
         this.ffnet = new modules.ffnet(this);
         this.ON([{orig: 'ffnet'}], this.ffnet.handle.bind(this.ffnet), false)
+
+        this.ON(['get_job'], m => {
+            m.reply({job_result: Job.getResults(m.j_id), j_id: m.j_id})
+        })
     }
 
     /**
