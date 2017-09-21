@@ -2,6 +2,7 @@
 *.log
 **/.idea/
 node_modules/
+modules/*.json
 python/ffnet/cache/
 *.pyc
 sessions/

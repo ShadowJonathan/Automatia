@@ -1,5 +1,6 @@
 var PythonShell = require('python-shell');
 var events = require('events');
+
 /*var pyshell = new PythonShell('python/ffnet/__main__.py', {
     mode: "json",
     args: ['https://www.fanfiction.net/s/12652269/1/Real-Lucifer', '-m'],
@@ -19,7 +20,8 @@ pyshell.end(function (err, results) {
 class ffnetInterface extends events.EventEmitter {
     constructor() {
         super();
-        this.nfunc = ()=>{};
+        this.nfunc = () => {
+        };
         this.Args = {};
         this.script = null
     }
@@ -40,6 +42,7 @@ class ffnetInterface extends events.EventEmitter {
         let l = [].concat(this.args_prefix);
         for (let k in this.Args) {
             l.push("-" + k);
+            // noinspection JSUnfilteredForInLoop
             let v = this.Args[k];
             if (typeof(v) != "boolean") {
                 l.push(v)
@@ -61,9 +64,6 @@ class ffnetInterface extends events.EventEmitter {
         this.script.on('message', m => {
             console.log("Script message:", m);
             this.handle(m);
-            /*if (m.type == 'notification') {
-                this.emit('notification', m)
-            }*/
         })
     }
 
@@ -110,12 +110,6 @@ class Story extends ffnetInterface {
                         res(m)
                     }
                 });
-                s.on('message', m =>{
-                    if (m.accepted) {
-                        m.s_id = this.ID;
-                        this.nfunc(m)
-                    }
-                })
             };
             this.run();
             this.clear();
@@ -132,9 +126,16 @@ class Story extends ffnetInterface {
     }
 
     download(dir = null) {
-        return new Promise(() => {
+        return new Promise((res) => {
             if (dir)
                 this.arg('dir', dir);
+            this.postInit = (s) => {
+                s.on('message', (m) => {
+                    if (m.finished) {
+                        res(m)
+                    }
+                })
+            };
             this.run()
         })
     }
@@ -146,14 +147,47 @@ class Story extends ffnetInterface {
 }
 
 class Archive extends ffnetInterface {
-    constructor() {
-        super()
+    constructor(url) {
+        super();
+        let r = /\/?(\w+)\/(.*?)\/?$/.exec(url);
+        this.cat = r[1];
+        this.archive = r[2];
+        this.arg('c', this.cat);
+        this.arg('a', this.archive)
+    }
+
+    info() {
+        return new Promise((res) => {
+            this.postInit = s => {
+                s.on('message', m => {
+                    console.log("MESSAGE", m);
+                    if (m.meta !== undefined) {
+                        res(m)
+                    }
+                });
+            };
+            this.run();
+        })
+    }
+
+    getinfo() {
+        this.arg('action', 'getinfo');
+        return this.info()
+    }
+
+    get args_prefix() {
+        return ['-archive']
     }
 
     static getArchives(category) {
-        let i = new ffnetInterface();
-        i.arg('archive');
-        i.arg('c', category);
+        return new Promise((res) => {
+                let i = new ffnetInterface();
+                i.arg('archive');
+                i.arg('c', category);
+                i.run();
+                i.script.on('message', res);
+            }
+        )
     }
 }
 
@@ -162,4 +196,4 @@ module.exports = {
         Archive,
         Story
     }
-}
+};
