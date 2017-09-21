@@ -10,6 +10,8 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({server});
 const Serve = require('./serve');
 
+// TODO SETUP AUTO-JOBS AND SYNCING (archives and stories)
+
 try {
     require('fs').mkdirSync('files');
 } catch (err) {
