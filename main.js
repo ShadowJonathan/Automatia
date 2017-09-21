@@ -1,3 +1,4 @@
+if (parseInt(/v(\d+)/.exec(process.version)[1]) < 8) throw new Error("NODE VERSION UNDER 8");
 const express = require('express');
 const http = require('http');
 const url = require('url');
