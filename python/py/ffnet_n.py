@@ -69,6 +69,14 @@ class ffnet_archive(ffnet_notify):
         self.messages['meta'] = meta
         return self
 
+    def stamps(self, stamps):
+        self.messages['stamps'] = stamps
+        return self
+
+    def affected(self, array):
+        self.messages['affected'] = array
+        return self
+
     def archive_index(self, results):
         self.messages['data'] = [{'name': e[0], 'len': e[1], 'url': e[2]} for e in results]
         return self

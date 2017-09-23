@@ -77,6 +77,7 @@ try:
         category = None
         archive = None
         action = None
+        show_affected = '-sa' in sys.argv
 
         got_arg = None
         try:
@@ -92,14 +93,19 @@ try:
         except IndexError:
             raise exc.InvalidArgs(got_arg)
 
-        if (not category) or category and (not search.Valid_category(category)):
+        if action == 'stamps':
+            s = {}
+            for c in ['movie', 'play', 'tv', 'misc', 'game', 'cartoon', 'book', 'anime']:
+                s[c] = search.Archive.get_stamps(c)
+            ffnet_archive().stamps(s).post()
+        elif (not category) or category and (not search.Valid_category(category)):
             raise exc.InvalidArgs('NO VALID CATEGORY ARG')
-        if not archive:
+        elif not archive:
             ffnet_archive().archive_index(search.SmartGetAllArchives(category)).post()
         else:
             a = None
             action = action or 'info'
-            if action != 'dump' and action != 'info':
+            if action != 'dump' and action != 'info' and action != 'stamps':
                 a = search.Archive('/' + search.CAT2URL[search.Valid_category(category)] + "/" + archive + '/')
 
             if '-allow-m' in sys.argv:
@@ -109,10 +115,10 @@ try:
                 limit = None
                 if '-limit' in sys.argv:
                     limit = int(sys.argv[sys.argv[1:].index('-limit') + 2])
-                a.update(limit)
+                a.update(limit, show_affected)
             elif action == 'refresh':
                 ALL = '-all' in sys.argv
-                a.refresh(ALL)
+                a.refresh(ALL, show_affected)
             elif action == 'info':
                 search.Archive.info(search.CAT2URL[search.Valid_category(category)], archive)
             elif action == 'getinfo':
@@ -127,8 +133,8 @@ try:
 
 except exc.NoURL:
     ffnet_notify().fail("No Url", 0).post()
-except exc.ArchiveDoesNotExist:
-    ffnet_notify().fail("Archive Invalid", 6).post()
+except exc.ArchiveDoesNotExist, a:
+    ffnet_notify().fail(str(a), 6).post()
 #except Exception as e:
 #    ffnet_notify().fail("Unknown Error: %s" % e, 10).post()
 

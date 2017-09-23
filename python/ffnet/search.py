@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import json
 import py
 import exc
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +71,6 @@ def Url_category(name):
 
 
 def SmartGetAllArchives(category):
-    import os
     path = os.path.dirname(os.path.realpath(__file__)) + '/cache/' + category + '/' + 'meta.json'
     # print path
     try:
@@ -476,6 +476,9 @@ class EntryList(dict):
         return l[0].data.get('last_refresh')
 
 
+Affected = []
+
+
 class Archive(story.WebClient):
     @staticmethod
     def _get_chars(soup):
@@ -487,7 +490,6 @@ class Archive(story.WebClient):
 
     @staticmethod
     def dump_cache(category, archive):
-        import os
         path = os.path.dirname(os.path.realpath(__file__)) + '/cache/' + category + '/' + archive + \
                '.json'
         # print path
@@ -499,7 +501,6 @@ class Archive(story.WebClient):
 
     @staticmethod
     def info(category, archive):
-        import os
         path = os.path.dirname(os.path.realpath(__file__)) + '/cache/' + category + '/' + archive + \
                '.json'
         if os.path.exists(path):
@@ -510,10 +511,17 @@ class Archive(story.WebClient):
         else:
             py.ffnet_archive().info(False, category, archive).post()
 
+    @staticmethod
+    def get_stamps(category):
+        h = JSONHandler(os.path.dirname(os.path.realpath(__file__)) + '/cache/' + category + '/meta.json')
+        return h.data.get('stamps')
+
     def __init__(self, url):
         story.WebClient.__init__(self)
         self.url = 'https://www.fanfiction.net' + (url[0] != '/' and '/' or '') + str(url)
-        _, self.soup = self.get(self.url)
+        data, self.soup = self.get(self.url)
+        if 'The page you are looking for does not exist' in data:
+            raise exc.ArchiveDoesNotExist(self.url)
         rer = re.search(r'www.fanfiction.net/(\w+?)/(.+?)/', self.url)
         self.category = rer.group(1)
         self.archive_name = rer.group(2)
@@ -529,6 +537,8 @@ class Archive(story.WebClient):
         for e in soup.select('#content_wrapper_inner > div.z-list.zhover.zpointer'):
             entry = Entry(e)
             self.entries[entry.ID] = entry
+            global Affected
+            Affected.append(entry.ID)
 
     def _get_first(self, pages=1):
         for x in range(0, pages):
@@ -560,13 +570,14 @@ class Archive(story.WebClient):
         self._convert_entries(soup)
 
     def _get_till(self, time):
-        i = 0
-        while self.entries.Earliest_Updated() > time:
+        i = 1
+        while True:
             self._get_page(i)
             i += 1
+            if self.entries.Earliest_Updated() <= time:
+                return
 
     def _get_cache(self):
-        import os
         path = os.path.dirname(os.path.realpath(__file__)) + '/cache/' + self.category + '/' + self.archive_name + \
                '.json'
         # print path
@@ -576,13 +587,30 @@ class Archive(story.WebClient):
             pass
         return JSONHandler(path)
 
-    def update(self, limit=None):
+    def _meta_update(self):
+        path = os.path.dirname(os.path.realpath(__file__)) + '/cache/' + self.category + '/meta.json'
+        h = JSONHandler(path)
+        if not h.data.get('stamps'):
+            h.data['stamps'] = {}
+        h.data['stamps'][self.archive_name] = datetime.now()
+        h.save()
+
+
+    def _show_affected(self):
+        global Affected
+        py.ffnet_archive().affected(Affected).post()
+
+
+    def update(self, limit=None, show_affected=False):
         cache = self._get_cache()
         self._get_all(limit)
         cache.process(self.entries)
         cache.save()
+        self._meta_update()
+        if show_affected:
+            self._show_affected()
 
-    def refresh(self, ALL=False):
+    def refresh(self, ALL=False, show_affected=False):
         cache = self._get_cache()
         l = EntryList(cache.data)
         if ALL:
@@ -591,3 +619,6 @@ class Archive(story.WebClient):
             self._get_till(l.Latest_Updated())
         cache.process(self.entries)
         cache.save()
+        self._meta_update()
+        if show_affected:
+            self._show_affected()
