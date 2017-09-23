@@ -12,7 +12,7 @@ class Serve extends events.EventEmitter {
         super();
         this.ws = ws;
         this.ws.onclose = () => this.emit('close');
-        this.meta = {};
+        this.meta = null;
         this.r_uuid = null;
         this.send = (m) => {
             try {
@@ -29,7 +29,8 @@ class Serve extends events.EventEmitter {
         this.ON(['uuid'], (m) => {
             this.r_uuid = m.uuid;
             this.meta = PJO({file: './sessions/' + m.uuid + '.json'});
-            this.emit('got_meta')
+            this.emit('got_meta');
+            this.tasks = new Tasks(this);
         });
         this.setupBasic()
     }
@@ -98,7 +99,36 @@ class Serve extends events.EventEmitter {
             this.on('m', f.bind(this));
         }
     }
+}
 
+class Tasks extends events.EventEmitter {
+    constructor(Server) {
+        super();
+        /**
+         * @type {Serve}
+         */
+        this.server = Server;
+
+        // checkFFDates
+        let midnight = new Date();
+        midnight.setHours(0, 0, 0, 0);
+        if (!this.server.meta.FFCheckDate || new Date(this.server.meta.FFCheckDate) < midnight) {
+            this.checkFFDates()
+        }
+        this.on('midnight', this.checkFFDates.bind(this));
+
+        // DEBUG
+        /*
+        this.on('midnight', () => console.log("Midnight!"));
+        this.on('hour', () => console.log("Hour!"));
+        this.on('minute', () => console.log("Minute!"))
+        */
+    }
+
+
+    checkFFDates() {
+        this.server.send({orig: 'ffnet', get_stamps: true})
+    }
 }
 
 module.exports = Serve;

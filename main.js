@@ -7,8 +7,10 @@ const app = express();
 const uuid = require('uuid/v1');
 const router = express.Router();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({server});
+const wss = WSS = new WebSocket.Server({server});
 const Serve = require('./serve');
+const scheduler = require('node-schedule');
+
 
 // TODO SETUP AUTO-JOBS AND SYNCING (archives and stories)
 
@@ -27,7 +29,7 @@ router.get('/', function (req, res) {
 });
 try {
     router.use('/files', express.static(__dirname + "/files"));
-} catch(err) {
+} catch (err) {
 }
 
 router.get('/register', function (req, res) {
@@ -65,3 +67,21 @@ const beat = setInterval(function ping() {
         ws.send('{"ping":true}');
     });
 }, 5000);
+
+let Schedules = {
+    midnight: scheduler.scheduleJob('0 0 0 * * *', () => {
+        wss.clients.forEach(c => {
+            c.S.tasks.emit('midnight')
+        })
+    }),
+    hour: scheduler.scheduleJob('0 0 * * * *', () => {
+        wss.clients.forEach(c => {
+            c.S.tasks.emit('hour')
+        })
+    }),
+    min: scheduler.scheduleJob('0 * * * * *', () => {
+        wss.clients.forEach(c => {
+            c.S.tasks.emit('minute')
+        })
+    }),
+};

@@ -160,7 +160,6 @@ class Archive extends ffnetInterface {
         return new Promise((res) => {
             this.postInit = s => {
                 s.on('message', m => {
-                    console.log("MESSAGE", m);
                     if (m.meta !== undefined) {
                         res(m)
                     }
@@ -179,11 +178,33 @@ class Archive extends ffnetInterface {
         return ['-archive']
     }
 
+    async getEntries() {
+        this.arg('action', 'dump');
+        this.run();
+        let m = await new Promise(r => {
+            this.script.on('message', (m) => {
+                if (m.file_path) r(m)
+            })
+        });
+        return require('persisted-json-object')({file:m.file_path})
+    }
+
     static getArchives(category) {
         return new Promise((res) => {
                 let i = new ffnetInterface();
                 i.arg('archive');
                 i.arg('c', category);
+                i.run();
+                i.script.on('message', res);
+            }
+        )
+    }
+
+    static getStamps() {
+        return new Promise((res) => {
+                let i = new ffnetInterface();
+                i.arg('archive');
+                i.arg('stamps');
                 i.run();
                 i.script.on('message', res);
             }

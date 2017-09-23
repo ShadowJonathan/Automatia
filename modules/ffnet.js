@@ -6,9 +6,6 @@ module.exports = class ffnet {
     constructor(server) {
         this.s = server;
         this.meta = server.meta;
-        if (!this.meta.ffnet_queue) {
-            this.meta.ffnet_queue = []
-        }
     }
 
     notify(data) {
@@ -26,7 +23,11 @@ module.exports = class ffnet {
      * @param {Boolean|String} message.archive
      * @param {String} message.category
      * @param {Boolean} message.info
+     * @param {Boolean} message.getinfo
+     * @param {Boolean} message.getreg
      * @param {String} message.a_url
+     * @param {Boolean} message.stamps
+     * @param {?Object.<String, {meta: Date, cat: string, reg: ?Date}>} message.data
      */
     handle(message) {
         if (message.queue) {
@@ -70,8 +71,41 @@ module.exports = class ffnet {
                     a.info().then(message.reply)
                 } else if (message.getinfo) {
                     a.getinfo().then(message.reply)
+                } else if (message.getreg) {
+                    a = SA.Archive(message.a_url)
+                    a.getEntries().then(r => {
+                        message.reply({orig: 'ffnet', archive: a.archive, category: a.cat, registry: r})
+                    })
                 }
             }
+        } else if (message.stamps) {
+            this.s.meta.FFCheckDate = new Date();
+            SA.Archive.getStamps().then(d => {
+                let ONE_HOUR = 60 * 60 * 1000;
+                /**
+                 * @type {Object.<String, Object.<String, Date>>}
+                 */
+                let stamps = d.stamps;
+                for (let a of Object.keys(message.data)) {
+                    let data = message.data[a];
+                    if (!stamps[data.cat] || !stamps[data.cat][a]) {
+                        console.error(data.cat + " > " + a + " HAS NEVER BEEN INITIALISED");
+                        continue
+                    }
+                    if (data.reg)
+                        data.reg = new Date(data.reg);
+                    data.meta = new Date(data.meta);
+                    stamps[data.cat][a] = new Date(stamps[data.cat][a]);
+                    if (data.reg)
+                        if ((data.reg - stamps[data.cat][a]) > ONE_HOUR) {
+                            message.reply({orig: 'ffnet', archive: a, category: data.cat, registry: false})
+                        }
+
+                    if ((new Date().getTime() - (24 * 60 * 60 * 1000)) > data.meta) {
+                        message.reply({orig: 'ffnet', archive: a, category: data.cat, meta: null, initialised: false})
+                    }
+                }
+            })
         }
     }
 

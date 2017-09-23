@@ -93,7 +93,7 @@ try:
         except IndexError:
             raise exc.InvalidArgs(got_arg)
 
-        if action == 'stamps':
+        if action == 'stamps' or '-stamps' in sys.argv:
             s = {}
             for c in ['movie', 'play', 'tv', 'misc', 'game', 'cartoon', 'book', 'anime']:
                 s[c] = search.Archive.get_stamps(c)

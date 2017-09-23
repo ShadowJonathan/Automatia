@@ -71,7 +71,7 @@ def Url_category(name):
 
 
 def SmartGetAllArchives(category):
-    path = os.path.dirname(os.path.realpath(__file__)) + '/cache/' + category + '/' + 'meta.json'
+    path = os.path.dirname(os.path.realpath(__file__)) + '/cache/' + category + '/meta.json'
     # print path
     try:
         os.makedirs(os.path.dirname(path))
@@ -80,7 +80,7 @@ def SmartGetAllArchives(category):
     h = JSONHandler(path)
     if h.data.get('last_updated'):
         h.data['last_updated'] = make_datetime(h.data.get('last_updated'))
-    if len(h.data) < 1:
+    if len(h.data) < 1 or not h.data.get('last_updated'):
         h.process({'archives': GetAllArchives(category), 'last_updated': datetime.now()})
         h.save()
     elif h.data.get('last_updated') < datetime.now() - timedelta(days=7):
@@ -490,8 +490,8 @@ class Archive(story.WebClient):
 
     @staticmethod
     def dump_cache(category, archive):
-        path = os.path.dirname(os.path.realpath(__file__)) + '/cache/' + category + '/' + archive + \
-               '.json'
+        path = os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + '/cache/' + category + '/' + archive + \
+                                '.json')
         # print path
         try:
             cache = JSONHandler(path)
@@ -507,7 +507,8 @@ class Archive(story.WebClient):
             cache = EntryList(JSONHandler(path).data)
             al = GetAllArchives(category)
             meta = al[next(index for (index, d) in enumerate(al) if archive.lower() in d[2].lower())]
-            py.ffnet_archive().info(True, category, archive, cache.Earliest_Updated(), cache.Latest_Updated(), len(cache), meta).post()
+            py.ffnet_archive().info(True, category, archive, cache.Earliest_Updated(), cache.Latest_Updated(),
+                                    len(cache), meta).post()
         else:
             py.ffnet_archive().info(False, category, archive).post()
 
@@ -560,7 +561,7 @@ class Archive(story.WebClient):
                 break
         count = count and count < limit and count or limit
         n.progress_init(count, 'page')
-        for x in range(0, count + 1):
+        for x in range(0, count):
             logger.debug("Getting page %d of %d" % (x + 1, count))
             self._get_page(self._get_url_plus_args(x or None))
             n.progress(x).post()
@@ -595,11 +596,9 @@ class Archive(story.WebClient):
         h.data['stamps'][self.archive_name] = datetime.now()
         h.save()
 
-
     def _show_affected(self):
         global Affected
         py.ffnet_archive().affected(Affected).post()
-
 
     def update(self, limit=None, show_affected=False):
         cache = self._get_cache()
