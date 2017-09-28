@@ -71,17 +71,17 @@ const beat = setInterval(function ping() {
 let Schedules = {
     midnight: scheduler.scheduleJob('0 0 0 * * *', () => {
         wss.clients.forEach(c => {
-            c.S.tasks.emit('midnight')
+            c.S.tasks && c.S.tasks.emit('midnight')
         })
     }),
     hour: scheduler.scheduleJob('0 0 * * * *', () => {
         wss.clients.forEach(c => {
-            c.S.tasks.emit('hour')
+            c.S.tasks && c.S.tasks.emit('hour')
         })
     }),
     min: scheduler.scheduleJob('0 * * * * *', () => {
         wss.clients.forEach(c => {
-            c.S.tasks.emit('minute')
+            c.S.tasks && c.S.tasks.emit('minute')
         })
     }),
 };
