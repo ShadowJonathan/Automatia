@@ -26,6 +26,7 @@ import cookielib as cl
 import HtmlTagStack as stack
 import sys
 import bs4
+import pytz
 
 DEBUG = False
 
@@ -464,8 +465,8 @@ class Story(base_adapter):
 
         dates = soup.findAll('span', {'data-xutime': re.compile(r'^\d+$')})
         if len(dates) > 1:
-            self.metadata['dateUpdated'] = datetime.fromtimestamp(float(dates[0]['data-xutime']))
-        self.metadata['datePublished'] = datetime.fromtimestamp(float(dates[-1]['data-xutime']))
+            self.metadata['dateUpdated'] = datetime.fromtimestamp(float(dates[0]['data-xutime']), pytz.utc)
+        self.metadata['datePublished'] = datetime.fromtimestamp(float(dates[-1]['data-xutime']), pytz.utc)
 
         metakeys = {
             'Chapters': False,

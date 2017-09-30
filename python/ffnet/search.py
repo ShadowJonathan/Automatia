@@ -8,6 +8,11 @@ import json
 import py
 import exc
 import os
+import pytz
+from dateutil.tz import tzlocal
+import dateutil.parser
+
+now = lambda: datetime.utcnow().replace(tzinfo=tzlocal())
 
 logger = logging.getLogger(__name__)
 
@@ -81,10 +86,10 @@ def SmartGetAllArchives(category):
     if h.data.get('last_updated'):
         h.data['last_updated'] = make_datetime(h.data.get('last_updated'))
     if len(h.data) < 1 or not h.data.get('last_updated'):
-        h.process({'archives': GetAllArchives(category), 'last_updated': datetime.now()})
+        h.process({'archives': GetAllArchives(category), 'last_updated': now()})
         h.save()
-    elif h.data.get('last_updated') < datetime.now() - timedelta(days=7):
-        h.process({'archives': GetAllArchives(category), 'last_updated': datetime.now()})
+    elif h.data.get('last_updated') < now() - timedelta(days=7):
+        h.process({'archives': GetAllArchives(category), 'last_updated': now()})
         h.save()
     return h.data['archives']
 
@@ -123,7 +128,11 @@ def make_datetime(json_date):
         return datetime.strptime(json_date, '%Y-%m-%dT%H:%M:%S.%f')
     except:
         pass
-    return datetime.strptime(json_date, '%Y-%m-%dT%H:%M:%S')
+    try:
+        return datetime.strptime(json_date, '%Y-%m-%dT%H:%M:%S')
+    except:
+        pass
+    return dateutil.parser.parse(json_date)
 
 
 class JSONHandler:
@@ -384,11 +393,13 @@ class Entry:
             # Updated, Published
             if "Updated" in info[0]:
                 self.data['updated'] = datetime.fromtimestamp(
-                    float(bs4.BeautifulSoup(info[0], 'html5lib').select('span')[0]['data-xutime']))
+                    float(bs4.BeautifulSoup(info[0], 'html5lib').select('span')[0]['data-xutime']),
+                    pytz.utc)
                 info.pop(0)
 
             self.data['published'] = datetime.fromtimestamp(
-                float(bs4.BeautifulSoup(info[0], 'html5lib').select('span')[0]['data-xutime']))
+                float(bs4.BeautifulSoup(info[0], 'html5lib').select('span')[0]['data-xutime']),
+                pytz.utc)
             info.pop(0)
 
             # Characters
@@ -413,7 +424,7 @@ class Entry:
                         logger.warn("\"" + info + "\", much more than possible.")
                 info.pop(0)
 
-            self.data['last_refreshed'] = datetime.now()
+            self.data['last_refreshed'] = now()
         except ValueError, v:
             logger.error("VALUE ERROR: " + str(v) + " WITH " + info[0])
             import traceback
@@ -450,28 +461,28 @@ class EntryList(dict):
     def Latest_Updated(self):
         l = self._make_list()
         if not l:
-            return datetime.now()
+            return now()
         l.sort(key=lambda x: x.data.get('updated') or x.data['published'], reverse=True)
         return l[0].data.get('updated') or l[0].data['published']
 
     def Earliest_Updated(self):
         l = self._make_list()
         if not l:
-            return datetime.now()
+            return now()
         l.sort(key=lambda x: x.data.get('updated') or x.data['published'])
         return l[0].data.get('updated') or l[0].data['published']
 
     def Latest_Refresh(self):
         l = self._make_list()
         if not l:
-            return datetime.now()
+            return now()
         l.sort(key=lambda x: x.data.get('last_refresh'), reverse=True)
         return l[0].data.get('last_refresh')
 
     def Earliest_Refresh(self):
         l = self._make_list()
         if not l:
-            return datetime.now()
+            return now()
         l.sort(key=lambda x: x.data.get('last_refresh'))
         return l[0].data.get('last_refresh')
 
@@ -575,6 +586,7 @@ class Archive(story.WebClient):
         while True:
             self._get_page(i)
             i += 1
+            print self.entries.Earliest_Updated(), time
             if self.entries.Earliest_Updated() <= time:
                 return
 
@@ -593,7 +605,7 @@ class Archive(story.WebClient):
         h = JSONHandler(path)
         if not h.data.get('stamps'):
             h.data['stamps'] = {}
-        h.data['stamps'][self.archive_name] = datetime.now()
+        h.data['stamps'][self.archive_name] = now()
         h.save()
 
     def _show_affected(self):
