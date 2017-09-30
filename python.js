@@ -156,6 +156,25 @@ class Archive extends ffnetInterface {
         this.arg('a', this.archive)
     }
 
+    update() {
+        this.arg('action', 'update');
+        this.run();
+    }
+
+    async asyncUpdate() {
+        this.update();
+        await new Promise(r => this.script.on('message', m => {
+            if (m.done) r(m)
+        }))
+    }
+
+    refresh(all=false) {
+        this.arg('action', 'refresh');
+        if (all)
+            this.arg('all');
+        this.run()
+    }
+
     info() {
         return new Promise((res) => {
             this.postInit = s => {
@@ -182,11 +201,18 @@ class Archive extends ffnetInterface {
         this.arg('action', 'dump');
         this.run();
         let m = await new Promise(r => {
-            this.script.on('message', (m) => {
-                if (m.file_path) r(m)
+            this.script.once('message', (m) => {
+                if (m.file_path)
+                    r(m)
             })
         });
-        return require('persisted-json-object')({file:m.file_path})
+        let o = require('persisted-json-object')({file: m.file_path});
+        if (JSON.stringify(o) == "{}") {
+            this.clear();
+            await new Promise(r => this.script.on('close', r));
+            await this.asyncUpdate();
+        }
+        return require('persisted-json-object')({file: m.file_path})
     }
 
     static getArchives(category) {
