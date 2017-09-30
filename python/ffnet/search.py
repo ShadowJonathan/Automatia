@@ -563,7 +563,7 @@ class Archive(story.WebClient):
         n.progress_init(count, 'page')
         for x in range(0, count):
             logger.debug("Getting page %d of %d" % (x + 1, count))
-            self._get_page(self._get_url_plus_args(x or None))
+            self._get_page(x or None)
             n.progress(x).post()
 
     def _get_page(self, page):
