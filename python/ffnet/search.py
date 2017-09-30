@@ -108,7 +108,8 @@ def GetAllArchives(catagory, crossover=False):
 
 def handler(x):
     if isinstance(x, datetime):
-        return x.isoformat()
+        str = x.isoformat()
+        return str + ("+" not in str and "Z" or "")
     elif isinstance(x, Entry):
         return x.data
     raise TypeError("Unknown type")
