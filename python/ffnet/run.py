@@ -565,6 +565,7 @@ class Story(base_adapter):
                 'dateUpdated',
                 'storyID',
                 'genre',
+                'summary',
                 ('numChapters', 'chapters'),
                 ('category', lambda l: len(l) > 1 and l or l[0]),
                 ('reviews', makenumber, 0),
