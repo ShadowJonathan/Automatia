@@ -169,7 +169,7 @@ class Archive extends ffnetInterface {
                     orig: 'ffnet',
                     archive: this.archive,
                     category: this.cat,
-                    registry_update: "Initialising data... (%d/%d)".format(m._current, m._total)
+                    registry_update: `Initialising data... (${m._current}/${m._total})`
                 })
         });
         await new Promise(r => this.script.on('message', m => {
