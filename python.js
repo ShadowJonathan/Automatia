@@ -208,7 +208,6 @@ class Archive extends ffnetInterface {
         });
         let o = require('persisted-json-object')({file: m.file_path});
         if (JSON.stringify(o) == "{}") {
-            this.clear();
             await new Promise(r => this.script.on('close', r));
             await this.asyncUpdate();
         }
