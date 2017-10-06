@@ -73,7 +73,7 @@ module.exports = class ffnet {
                     a.getinfo().then(message.reply)
                 } else if (message.getreg) {
                     a = new SA.Archive(message.a_url);
-                    a.getEntries().then(r => {
+                    a.getEntries(message.reply).then(r => {
                         message.reply({orig: 'ffnet', archive: a.archive, category: a.cat, registry: r})
                     })
                 }
