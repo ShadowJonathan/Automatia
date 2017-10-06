@@ -167,8 +167,8 @@ class Archive extends ffnetInterface {
             if (m._progress_name)
                 replyFunc({
                     orig: 'ffnet',
-                    archive: a.archive,
-                    category: a.cat,
+                    archive: this.archive,
+                    category: this.cat,
                     registry_update: "Initialising data... (%d/%d)".format(m._current, m._total)
                 })
         });
