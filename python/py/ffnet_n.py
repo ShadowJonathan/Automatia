@@ -57,13 +57,15 @@ class ffnet_archive(ffnet_notify):
         self.messages['latest_refresh'] = data[1]
         return self
 
-    def info(self, initialised=False, category="", archive="", earliest=None, latest=None, amount=None, meta=None):
+    def info(self, initialised=False, category="", archive="", earliest=None, latest=None, amount=None, meta=None,
+             updated=None):
         self.messages['initialised'] = initialised
         self.messages['category'] = category
         self.messages['archive'] = archive
         self.messages['earliest'] = earliest
         self.messages['latest'] = latest
         self.messages['amount'] = amount
+        self.messages['updated'] = updated
         if meta:
             meta = {'name': meta[0], 'len': meta[1], 'url': meta[2]}
         self.messages['meta'] = meta

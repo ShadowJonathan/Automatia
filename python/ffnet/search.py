@@ -519,7 +519,7 @@ class Archive(story.WebClient):
             al = GetAllArchives(category)
             meta = al[next(index for (index, d) in enumerate(al) if archive.lower() in d[2].lower())]
             py.ffnet_archive().info(True, category, archive, cache.Earliest_Updated(), cache.Latest_Updated(),
-                                    len(cache), meta).post()
+                                    len(cache), meta, cache.Latest_Refresh()).post()
         else:
             py.ffnet_archive().info(False, category, archive).post()
 
