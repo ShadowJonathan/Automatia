@@ -476,15 +476,15 @@ class EntryList(dict):
         l = self._make_list()
         if not l:
             return now()
-        l.sort(key=lambda x: x.data.get('last_refresh'), reverse=True)
-        return l[0].data.get('last_refresh')
+        l.sort(key=lambda x: x.data.get('last_refreshed'), reverse=True)
+        return l[0].data.get('last_refreshed')
 
     def Earliest_Refresh(self):
         l = self._make_list()
         if not l:
             return now()
-        l.sort(key=lambda x: x.data.get('last_refresh'))
-        return l[0].data.get('last_refresh')
+        l.sort(key=lambda x: x.data.get('last_refreshed'))
+        return l[0].data.get('last_refreshed')
 
 
 Affected = []
