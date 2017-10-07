@@ -18,6 +18,7 @@ class Session extends events.EventEmitter {
         this.ws = null;
         this.ID = ID;
         this.in = new Channel(1000);
+        this.ip = null;
         Sessions[ID] = this;
 
         this.meta = PJO({file: './sessions/' + ID + '.json'});
@@ -27,7 +28,7 @@ class Session extends events.EventEmitter {
 
     setupBasic() {
         this.on('close', () => {
-            console.log(this.ws.ip + " (" + this.ID + ") disconnected.");
+            console.log(this.ip + " (" + this.ID + ") disconnected.");
             this.in.send(null);
         });
         this.ffnet = new modules.ffnet(this);
@@ -41,6 +42,7 @@ class Session extends events.EventEmitter {
      */
     attach(ws) {
         this.ws = ws;
+        this.ip = this.ws.ip;
         ws.onclose = () => {
             this.emit('close');
             this.ws = null;
