@@ -90,7 +90,7 @@ module.exports = class ffnet {
                     })
                 } else if (message.refresh) {
                     a = new SA.Archive(message.a_url);
-                    a.refresh(true).then(r => {
+                    a.asyncRefresh(true).then(r => {
                         message.reply({orig: 'ffnet', archive: a.archive, category: a.cat, registry: r})
                     })
                 }
