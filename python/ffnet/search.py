@@ -586,7 +586,7 @@ class Archive(story.WebClient):
         while True:
             self._get_page(i)
             i += 1
-            print self.entries.Earliest_Updated(), time
+            # print self.entries.Earliest_Updated(), time
             if self.entries.Earliest_Updated() <= time:
                 return
 
