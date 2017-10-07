@@ -47,7 +47,7 @@ class Session extends events.EventEmitter {
         };
         ws.on('message', m => {
             m = JSON.parse(m);
-            m.reply = this.send;
+            m.reply = this.send.bind(this);
             this.emit('m', m)
         });
         this._startprocess();
