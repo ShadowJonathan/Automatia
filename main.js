@@ -1,7 +1,8 @@
 if (parseInt(/v(\d+)/.exec(process.version)[1]) < 8) throw new Error("NODE VERSION UNDER 8");
 const express = require('express');
+const events = require("events");
+global.cron = new events.EventEmitter();
 const http = require('http');
-const url = require('url');
 const WebSocket = require('ws');
 const app = express();
 const uuid = require('uuid/v1');
@@ -56,7 +57,7 @@ wss.on('connection', function connection(ws, req) {
     });
 
     ws.send(s({login: true}));
-    ws.on('message', m=>{
+    ws.on('message', m => {
         if (us(m).uuid)
             Session.get(us(m).uuid).attach(ws);
     })
@@ -77,13 +78,27 @@ let Schedules = {
     midnight: scheduler.scheduleJob('0 0 0 * * *', () => {
         for (let s of Session.Sessions)
             s.tasks && s.tasks.emit('midnight')
+        cron.emit('midnight')
+    }),
+    six_hour: scheduler.scheduleJob("0 */6 * * *", () => {
+        for (let s of Session.Sessions)
+            s.tasks && s.tasks.emit('6hour')
+        cron.emit('6hour')
+    }),
+
+    three_hour: scheduler.scheduleJob("0 */3 * * *", () => {
+        for (let s of Session.Sessions)
+            s.tasks && s.tasks.emit('3hour')
+        cron.emit('3hour')
     }),
     hour: scheduler.scheduleJob('0 0 * * * *', () => {
         for (let s of Session.Sessions)
             s.tasks && s.tasks.emit('hour')
+        cron.emit('hour')
     }),
     min: scheduler.scheduleJob('0 * * * * *', () => {
         for (let s of Session.Sessions)
             s.tasks && s.tasks.emit('minute')
+        cron.emit('minute')
     }),
 };

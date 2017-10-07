@@ -184,6 +184,15 @@ class Archive extends ffnetInterface {
         this.run()
     }
 
+    async asyncRefresh(all, replyFunc) {
+        this.refresh(all);
+        await new Promise(r => this.script.on('message', m => {
+            if (m.done)
+                r(m)
+        }));
+        return await this.getEntries(()=>{})
+    }
+
     info() {
         return new Promise((res) => {
             this.postInit = s => {

@@ -1,6 +1,17 @@
 const Job = require('./../job');
 const SA = require('./../python').ffnet;
 
+global.cron.on('6hour', () => {
+    SA.Archive.getStamps().then(d => {
+        for (let cat in d.stamps) {
+            for (let a in d.stamps[cat]) {
+                let A = new SA.Archive(`/${cat}/${a}/`);
+                A.refresh()
+            }
+        }
+    })
+});
+
 
 module.exports = class ffnet {
     constructor(server) {
@@ -27,6 +38,7 @@ module.exports = class ffnet {
      * @param {Boolean} message.getreg
      * @param {String} message.a_url
      * @param {Boolean} message.stamps
+     * @param {Boolean} message.refresh
      * @param {?Object.<String, {meta: Date, cat: string, reg: ?Date}>} message.data
      */
     handle(message) {
@@ -74,6 +86,11 @@ module.exports = class ffnet {
                 } else if (message.getreg) {
                     a = new SA.Archive(message.a_url);
                     a.getEntries(message.reply).then(r => {
+                        message.reply({orig: 'ffnet', archive: a.archive, category: a.cat, registry: r})
+                    })
+                } else if (message.refresh) {
+                    a = new SA.Archive(message.a_url);
+                    a.refresh(true).then(r => {
                         message.reply({orig: 'ffnet', archive: a.archive, category: a.cat, registry: r})
                     })
                 }
