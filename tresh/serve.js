@@ -1,12 +1,14 @@
 const PJO = require('persisted-json-object');
 const events = require('events');
-const modules = require('./modules');
-const Job = require('./job');
+const modules = require('../modules/index');
+const Job = require('../job');
 try {
     require('fs').mkdirSync('sessions');
 } catch (err) {
 }
 
+
+// TODO MAKE CENTERALISED SESSION CACHE SYSTEM
 class Serve extends events.EventEmitter {
     constructor(ws) {
         super();
@@ -107,12 +109,12 @@ class Tasks extends events.EventEmitter {
         /**
          * @type {Serve}
          */
-        this.server = Server;
+        this.session = Server;
 
         // checkFFDates
         let midnight = new Date();
         midnight.setHours(0, 0, 0, 0);
-        if (!this.server.meta.FFCheckDate || new Date(this.server.meta.FFCheckDate) < midnight) {
+        if (!this.session.meta.FFCheckDate || new Date(this.session.meta.FFCheckDate) < midnight) {
             this.checkFFDates()
         }
         this.on('midnight', this.checkFFDates.bind(this));
@@ -127,7 +129,7 @@ class Tasks extends events.EventEmitter {
 
 
     checkFFDates() {
-        this.server.send({orig: 'ffnet', get_stamps: true})
+        this.session.send({orig: 'ffnet', get_stamps: true})
     }
 }
 

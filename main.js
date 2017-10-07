@@ -7,9 +7,10 @@ const app = express();
 const uuid = require('uuid/v1');
 const router = express.Router();
 const server = http.createServer(app);
-const wss = WSS = new WebSocket.Server({server});
-const Serve = require('./serve');
+const wss = WSS = new WebSocket.Server({server: server});
+//const Serve = require('./tresh/serve');
 const scheduler = require('node-schedule');
+const Session = require("./session");
 
 
 // TODO SETUP AUTO-JOBS AND SYNCING (archives and stories)
@@ -48,13 +49,17 @@ wss.on('connection', function connection(ws, req) {
     ws.ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
     console.log("Connection from %s", ws.ip);
-    ws.on('message', function incoming(message) {
-        if (message != '{"pong":true}')
-            console.log('Received (' + this.ip + '):', message);
+    console.log(req);
+    ws.on('message', m => {
+        if (m != '{"pong":true}')
+            console.log('Received (' + ws.ip + '):', m);
     });
 
     ws.send(s({login: true}));
-    ws.S = new Serve(ws)
+    ws.on('message', m=>{
+        if (us(m).uuid)
+            Session.get(us(m).uuid).attach(ws);
+    })
 });
 
 const beat = setInterval(function ping() {
@@ -70,18 +75,15 @@ const beat = setInterval(function ping() {
 
 let Schedules = {
     midnight: scheduler.scheduleJob('0 0 0 * * *', () => {
-        wss.clients.forEach(c => {
-            c.S.tasks && c.S.tasks.emit('midnight')
-        })
+        for (let s of Session.Sessions)
+            s.tasks && s.tasks.emit('midnight')
     }),
     hour: scheduler.scheduleJob('0 0 * * * *', () => {
-        wss.clients.forEach(c => {
-            c.S.tasks && c.S.tasks.emit('hour')
-        })
+        for (let s of Session.Sessions)
+            s.tasks && s.tasks.emit('hour')
     }),
     min: scheduler.scheduleJob('0 * * * * *', () => {
-        wss.clients.forEach(c => {
-            c.S.tasks && c.S.tasks.emit('minute')
-        })
+        for (let s of Session.Sessions)
+            s.tasks && s.tasks.emit('minute')
     }),
 };
