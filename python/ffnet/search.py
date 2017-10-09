@@ -421,7 +421,7 @@ class Entry:
                 else:
                     logger.warn("\"" + info[0] + "\" unknown.")
                     if len(info) > 1:
-                        raise Exception("\"" + str(info) + "\", much more than possible.\n"+self.data['url'])
+                        raise Exception("\"" + str(info) + "\", much more than possible. " + self.data['url'])
                 info.pop(0)
 
             self.data['last_refreshed'] = now()
@@ -588,7 +588,10 @@ class Archive(story.WebClient):
 
     def _get_page(self, page):
         _, soup = self.get(self._get_url_plus_args(page))
-        self._convert_entries(soup)
+        try:
+            self._convert_entries(soup)
+        except:
+            raise Exception("ERROR GETTING PAGE " + self._get_url_plus_args(page))
 
     def _get_till(self, time):
         i = 1
