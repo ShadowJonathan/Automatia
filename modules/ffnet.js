@@ -113,6 +113,9 @@ module.exports = class ffnet {
                     let data = message.data[a];
                     if (!stamps[data.cat] || !stamps[data.cat][a]) {
                         console.error(data.cat + " > " + a + " HAS NEVER BEEN INITIALISED");
+                        new Promise(()=>{
+                            new SA.Archive(data.cat + "/" + a).getinfo()
+                        });
                         continue
                     }
                     if (data.reg)
