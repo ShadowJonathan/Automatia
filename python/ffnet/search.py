@@ -540,6 +540,8 @@ class Archive(story.WebClient):
         self.characters = self._get_chars(self.soup)
         self.args = SearchArgs(self.characters)
         self.entries = EntryList()
+        self.fw_total = None
+        self.fw_progress = None
 
     def _get_url_plus_args(self, page=None):
         self.args.Page(page)
@@ -571,11 +573,18 @@ class Archive(story.WebClient):
                 count = int(re.search(r'p=(\d+)', e['href']).group(1))
                 break
         count = count and count < limit and count or limit
-        n.progress_init(count, 'page')
+        if self.fw_total is None:
+            n.progress_init(count, 'page')
+        else:
+            n.progress_init(self.fw_total, "page")
         for x in range(0, count):
             logger.debug("Getting page %d of %d" % (x + 1, count))
             self._get_page(x or None)
-            n.progress(x).post()
+            if self.fw_total is None:
+                n.progress(x).post()
+            else:
+                self.fw_progress += 1
+                n.progress(self.fw_progress).post()
 
     def _get_page(self, page):
         _, soup = self.get(self._get_url_plus_args(page))
@@ -612,24 +621,60 @@ class Archive(story.WebClient):
         global Affected
         py.ffnet_archive().affected(Affected).post()
 
+    def get_archive_page_count(self):
+        count = 2
+        r = self.args.args.get('r')
+        if r and (r == 10 or r == 4):
+            _, soup = self.get(self.url + '?r=10')
+        else:
+            soup = self.soup
+        for e in soup.select('#content_wrapper_inner > center > a'):
+            if e.string == 'Last':
+                count = int(re.search(r'p=(\d+)', e['href']).group(1))
+                break
+        return count
+
     def update(self, limit=None, show_affected=False):
         cache = self._get_cache()
-        self._get_all(limit)
+        if self.get_archive_page_count() > 50:
+            self.four_way()
+        else:
+            self._get_all(limit)
         cache.process(self.entries)
         cache.save()
         self._meta_update()
         if show_affected:
             self._show_affected()
 
-    def refresh(self, ALL=False, show_affected=False):
+    def refresh(self, get_all=False, show_affected=False):
         cache = self._get_cache()
-        l = EntryList(cache.data)
-        if ALL:
-            self._get_till(l.Earliest_Updated())
+        if self.get_archive_page_count() > 50:
+            count = 5
+            if get_all:
+                count = 10
+            self.four_way(count)
         else:
-            self._get_till(l.Latest_Updated())
+            entry_list = EntryList(cache.data)
+            if get_all:
+                self._get_till(entry_list.Earliest_Updated())
+            else:
+                self._get_till(entry_list.Latest_Updated())
         cache.process(self.entries)
         cache.save()
         self._meta_update()
         if show_affected:
             self._show_affected()
+
+    def four_way(self, count=-1):
+        if count == -1:
+            count = 20
+        self.fw_total = 4 * count
+        self.fw_progress = 0
+        self.args.Sort(0)
+        self._get_all(count)
+        self.args.Sort(2)
+        self._get_all(count)
+        self.args.Sort(3)
+        self._get_all(count)
+        self.args.Sort(4)
+        self._get_all(count)
