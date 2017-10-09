@@ -134,6 +134,7 @@ langs = {
     # 'Thermian':'', # Alien language from Galaxy Quest.
     u'Türkçe': 'fr',
     u'українська': 'uk',
+    u'Ukrainian': 'uk',
     u'Tiếng Việt': 'vi',
     u'中文': 'zh',
     u'Bahasa Malaysia': 'zsm',

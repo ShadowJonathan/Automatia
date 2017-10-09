@@ -68,7 +68,7 @@ wss.on('connection', function connection(ws, req) {
 const beat = setInterval(function ping() {
     wss.clients.forEach(function each(ws) {
         if (!(--ws.alive)) {
-            console.log("Terminated "+(ws.sess ? "("+ws.sess.ID+") ": "") + ws.ip);
+            console.log("Terminated " + (ws.sess ? "(" + ws.sess.ID + ") " : "") + ws.ip);
             return ws.terminate();
         }
         ws.send('{"ping":true}');
@@ -80,6 +80,11 @@ let Schedules = {
         for (let s of Session.Sessions)
             s.tasks && s.tasks.emit('midnight')
         cron.emit('midnight')
+    }),
+    hour_after_midnight: scheduler.scheduleJob('0 0 1 * * *', () => {
+        for (let s of Session.Sessions)
+            s.tasks && s.tasks.emit('midnight_1h')
+        cron.emit('midnight_1h')
     }),
     six_hour: scheduler.scheduleJob("0 */6 * * *", () => {
         for (let s of Session.Sessions)

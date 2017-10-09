@@ -640,7 +640,7 @@ class Archive(story.WebClient):
     def update(self, limit=None, show_affected=False):
         cache = self._get_cache()
         if self.get_archive_page_count() > 50:
-            self.four_way()
+            self.four_way(limit)
         else:
             self._get_all(limit)
         cache.process(self.entries)

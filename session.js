@@ -157,12 +157,12 @@ class Tasks extends events.EventEmitter {
         this.session = Session;
 
         // checkFFDates
-        let midnight = new Date();
-        midnight.setHours(0, 0, 0, 0);
-        if (!this.session.meta.FFCheckDate || new Date(this.session.meta.FFCheckDate) < midnight) {
+        let midnightplus = new Date();
+        midnightplus.setHours(1, 0, 0, 0);
+        if (!this.session.meta.FFCheckDate || new Date(this.session.meta.FFCheckDate) < midnightplus) {
             this.checkFFDates()
         }
-        this.on('midnight', this.checkFFDates.bind(this));
+        this.on('midnight_1h', this.checkFFDates.bind(this));
 
         // DEBUG
         /*
