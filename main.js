@@ -66,6 +66,7 @@ wss.on('connection', function connection(ws, req) {
 const beat = setInterval(function ping() {
     wss.clients.forEach(function each(ws) {
         if (!ws.isAlive) {
+            console.log("Terminated "+(ws.sess ? "("+ws.sess.ID+") ": "") + ws.ip);
             return ws.terminate();
         }
 

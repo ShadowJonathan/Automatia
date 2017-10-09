@@ -42,6 +42,7 @@ class Session extends events.EventEmitter {
      */
     attach(ws) {
         this.ws = ws;
+        ws.sess = this;
         this.ip = this.ws.ip;
         ws.onclose = () => {
             this.emit('close');
