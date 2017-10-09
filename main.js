@@ -45,7 +45,8 @@ server.listen(8080, function listening() {
 wss.on('connection', function connection(ws, req) {
     ws.isAlive = true;
     ws.on('message', m => {
-        if (us(m).pong) ws.isAlive = true
+        if (us(m).pong)
+            ws.alive = 3
     });
     ws.ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
@@ -65,12 +66,10 @@ wss.on('connection', function connection(ws, req) {
 
 const beat = setInterval(function ping() {
     wss.clients.forEach(function each(ws) {
-        if (!ws.isAlive) {
+        if (!(--ws.alive)) {
             console.log("Terminated "+(ws.sess ? "("+ws.sess.ID+") ": "") + ws.ip);
             return ws.terminate();
         }
-
-        ws.isAlive = false;
         ws.send('{"ping":true}');
     });
 }, 5000);
