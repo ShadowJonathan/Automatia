@@ -403,7 +403,7 @@ class Entry:
             info.pop(0)
 
             # Characters
-            if info and "Complete" not in info[0]:
+            while info and "Complete" not in info[0]:
                 chars_ships_text = info[0]
                 self.data['characters'].extend(
                     filter(lambda x: not not x,
