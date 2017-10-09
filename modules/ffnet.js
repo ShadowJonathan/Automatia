@@ -1,14 +1,20 @@
 const Job = require('./../job');
 const SA = require('./../python').ffnet;
+const {Pack} = require("./../workerlogic")
 
 global.cron.on('6hour', () => {
     SA.Archive.getStamps().then(d => {
+        let p = new Pack(2, true);
         for (let cat in d.stamps) {
             for (let a in d.stamps[cat]) {
-                let A = new SA.Archive(`/${cat}/${a}/`);
-                A.refresh()
+                let url = `/${cat}/${a}/`;
+                p.feed(async ()=> {
+                    let A = new SA.Archive(url);
+                    await A.simpleRefresh()
+                })
             }
         }
+        p.cork()
     })
 });
 
