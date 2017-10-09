@@ -545,7 +545,7 @@ class Archive(story.WebClient):
 
     def _get_url_plus_args(self, page=None):
         self.args.Page(page)
-        return self.url + "?" + urllib.urlencode(self.args.args)
+        return str(self.url + "?" + urllib.urlencode(self.args.args))
 
     def _convert_entries(self, soup):
         for e in soup.select('#content_wrapper_inner > div.z-list.zhover.zpointer'):
@@ -590,8 +590,8 @@ class Archive(story.WebClient):
         _, soup = self.get(self._get_url_plus_args(page))
         try:
             self._convert_entries(soup)
-        except:
-            raise Exception("ERROR GETTING PAGE " + self._get_url_plus_args(page))
+        except Exception as e:
+            raise Exception("ERROR GETTING PAGE " + self._get_url_plus_args(page) + " " + str(e))
 
     def _get_till(self, time):
         i = 1
