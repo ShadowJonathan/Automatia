@@ -61,7 +61,8 @@ wss.on('connection', function connection(ws, req) {
     ws.on('message', m => {
         if (us(m).uuid)
             Session.get(us(m).uuid).attach(ws);
-    })
+    });
+    ws.alive = 3
 });
 
 const beat = setInterval(function ping() {
