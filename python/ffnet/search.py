@@ -421,7 +421,7 @@ class Entry:
                 else:
                     logger.warn("\"" + info[0] + "\" unknown.")
                     if len(info) > 1:
-                        raise Exception("\"" + str(info) + "\", much more than possible.")
+                        raise Exception("\"" + str(info) + "\", much more than possible.\n"+self.data['url'])
                 info.pop(0)
 
             self.data['last_refreshed'] = now()
