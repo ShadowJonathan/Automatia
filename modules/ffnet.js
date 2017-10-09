@@ -4,7 +4,7 @@ const {Pack} = require("./../workerlogic")
 
 global.cron.on('6hour', () => {
     SA.Archive.getStamps().then(d => {
-        let p = new Pack(2, true);
+        let p = new Pack(6, true);
         for (let cat in d.stamps) {
             for (let a in d.stamps[cat]) {
                 let url = `/${cat}/${a}/`;
