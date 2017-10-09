@@ -125,6 +125,7 @@ langs = {
     u'Română': 'ro',
     u'Русский': 'ru',
     u'Slovenčina': 'sk',
+    u'Slovak': 'sk',
     u'Shqip': 'sq',
     u'српски': 'sr',
     u'Svenska': 'sv',
