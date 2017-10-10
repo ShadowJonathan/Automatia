@@ -669,7 +669,7 @@ class Archive(story.WebClient):
             self._show_affected()
 
     def four_way(self, count=-1):
-        if count == -1:
+        if count == -1 or count is None:
             count = 20
         self.fw_total = 4 * count
         self.fw_progress = 0
