@@ -69,7 +69,13 @@ class Session extends events.EventEmitter {
                     break;
                 }
                 console.log(v);
-                this.ws.send(JSON.stringify(v))
+                this.ws.send(JSON.stringify(v),
+                    (error) => {
+                        if (error) {
+                            this.in.send(v)
+                            console.warn("Failed to send ", v, error)
+                        }
+                    })
             }
         }.bind(this))
     }
