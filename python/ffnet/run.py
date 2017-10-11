@@ -15,6 +15,7 @@ import time
 import urllib
 import urllib2
 from datetime import datetime
+from dateutil.tz import tzlocal
 
 import exc
 from EPUB import EpubWriter
@@ -394,6 +395,18 @@ class Story(base_adapter):
             raise exc.FailedToDownload(
                 "Error downloading Chapter: %s! Chapter not found. Please check to see you are not using an outdated url." % url)
 
+        self.metadata.update({
+            'category': [],
+            'genre': [],
+            'ships': [],
+            'reviews': 0,
+            'favs': 0,
+            'follows': 0,
+            'completed': False,
+            'characters': [],
+            'archive': '',
+        })
+
         a = soup.find('a', href=re.compile(r"^/u/\d+"))
         self.metadata['authorId'] = a['href'].split('/')[2]
         self.metadata['authorUrl'] = 'https://' + self.host + a['href']
@@ -402,6 +415,7 @@ class Story(base_adapter):
         categories = soup.select('div#pre_story_links a.xcontrast_txt')
 
         if len(categories) > 1:
+            self.metadata['archive'] = str(categories[1].attrs['href'])
             self.metadata['category'].append(stripHTML(categories[1]))
         elif 'Crossover' in categories[0]['href']:
             caturl = "https://%s%s" % ('www.fanfiction.net', categories[0]['href'])
@@ -438,8 +452,10 @@ class Story(base_adapter):
 
         if 'Status: Complete' in metatext:
             self.metadata['status'] = 'Completed'
+            self.metadata['completed'] = True
         else:
             self.metadata['status'] = 'In-Progress'
+            self.metadata['completed'] = False
 
         metalist = metatext.split(" - ")
 
@@ -497,7 +513,7 @@ class Story(base_adapter):
         # print("chars_ships_text:%s"%chars_ships_text)
         # with 'pairing' support, pairings are bracketed w/o comma after
         # [Caspian X, Lucy Pevensie] Edmund Pevensie, Peter Pevensie
-        self.metadata['characters'].extend(chars_ships_text.replace('[', '').replace(']', ',').split(','))
+        self.metadata['characters'].extend([s.strip() for s in chars_ships_text.replace('[', '').replace(']', ',').split(',') if s.strip()])
 
         l = chars_ships_text
         while '[' in l:
@@ -557,26 +573,39 @@ class Story(base_adapter):
 
     def meta(self):
         makenumber = lambda n: (not isinstance(n, int)) and int(n.replace(',', '')) or n
+        currentdate = lambda x: datetime.utcnow().replace(tzinfo=tzlocal())
+        getarchivename = lambda a: re.search(r'/\w+/([^/]*?)/', a).group(1).lower()
 
         ffnet_notify().meta(meta_lend(
             [
                 'author',
-                ('authorId', 'authorID'),
+                'authorId',
+                'authorUrl',
+                ('storyUrl', 'url'),
                 'title',
-                'datePublished',
-                'dateUpdated',
+                ('datePublished', 'published'),
+                ('dateUpdated', 'updated'),
+                'rating',
+                'language',
+                'langcode',
                 'storyID',
                 'genre',
                 'summary',
+                'characters',
+                'ships',
+                'completed',
+                ('archive', getarchivename, ""),
+                ('last_refreshed', currentdate, None),
                 ('numChapters', 'chapters'),
-                ('category', lambda l: len(l) > 1 and l or l[0]),
+                #('category', lambda l: len(l) > 1 and l or l[0]),
                 ('reviews', makenumber, 0),
                 ('favs', makenumber, 0),
                 ('follows', makenumber, 0),
-                ('numWords', makenumber, 0)
+                ('numWords', makenumber, 0, 'words')
             ],
             self.metadata)
         ).post()
+        
         return self
 
 
@@ -592,17 +621,13 @@ def meta_lend(keys, dic):
             if isinstance(k[0], basestring) and isinstance(k[1], basestring):
                 k2 = k[0]
                 k1 = k[1]
+            elif callable(k[1]) and len(k) > 3 and isinstance(k[3], basestring):
+                do = k[1]
+                k1 = k[3]
+                k2 = k[0]
             elif callable(k[1]):
                 do = k[1]
                 k1 = k2 = k[0]
-
-        # logger.debug("meta_lend: getting %s... [%s] *%s >%s ^%s" % (
-        #     k1 == k2 and k1 or '(%s/%s)' % (k1, k2),
-        #     k,
-        #     default,
-        #     dic.get(k2, default),
-        #     do(dic.get(k2, default))
-        # ))
 
         d[k1] = do(dic.get(k2, default))
     return d

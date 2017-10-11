@@ -46,7 +46,7 @@ wss.on('connection', function connection(ws, req) {
     ws.isAlive = true;
     ws.on('message', m => {
         if (us(m).pong)
-            ws.alive = 3
+            ws.alive = 4
     });
     ws.ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 

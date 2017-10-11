@@ -95,6 +95,7 @@ class Story extends ffnetInterface {
         this.nfunc = sendfunc;
         this.ID = /(?:(?:www|m)\.fanfiction\.net\/s\/)?(\d+)(?:\/\d+)?/i.exec(ID)[1];
         this.metaInfo = {}
+        console.log(this.nfunc, sendfunc)
     }
 
     get args_prefix() {
@@ -198,7 +199,8 @@ class Archive extends ffnetInterface {
             if (m.done)
                 r(m)
         }));
-        return await this.getEntries(()=>{})
+        return await this.getEntries(() => {
+        })
     }
 
     info() {

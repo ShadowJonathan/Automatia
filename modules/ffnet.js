@@ -52,7 +52,7 @@ module.exports = class ffnet {
             for (let s of message.queue) {
                 if (s.id)
                     if (s.meta)
-                        new SA.Story(s.id, this.s.send).meta();
+                        new SA.Story(s.id, message.reply).meta();
                     else
                         this.download(s.id);
                 else {
@@ -67,7 +67,7 @@ module.exports = class ffnet {
             })
         } else if (message.story_id) {
             if (message.meta) {
-                new SA.Story(message.story_id, this.s.send).meta()
+                new SA.Story(message.story_id, message.reply).meta()
             } else if (message.download) {
                 this.download(message.story_id)
             }
@@ -158,7 +158,7 @@ module.exports = class ffnet {
     static async doJob(args) {
         switch (args.type) {
             case 'dl': {
-                let s = new SA.Story(args.story.id, args.self && args.self.s.send || (() => {
+                let s = new SA.Story(args.story.id, args.self && args.self.s.send.bind(args.self.s) || (() => {
                 }));
                 if (args.self) {
                     s.on('notification', (n) => {
