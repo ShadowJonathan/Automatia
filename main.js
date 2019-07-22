@@ -51,7 +51,6 @@ wss.on('connection', function connection(ws, req) {
     ws.ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
     console.log("Connection from %s", ws.ip);
-    console.log(req);
     ws.on('message', m => {
         if (m != '{"pong":true}')
             console.log('Received (' + ws.ip + '):', m);

@@ -66,6 +66,7 @@ class Session extends events.EventEmitter {
                     break;
                 if (!this.connected) {
                     this.in.send(v);
+                    console.warn("Stopping loop for", this.ID, "because this.connected = false");
                     break;
                 }
                 console.log(v);
